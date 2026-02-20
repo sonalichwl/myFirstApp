@@ -40,6 +40,7 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         padding: 10,
         marginRight: 10,
+        fontSize: 16, // Standard size to prevent iOS auto-zoom
     },
     button: {
         backgroundColor: '#007AFF',
