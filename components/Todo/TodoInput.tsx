@@ -20,6 +20,8 @@ const TodoInput = () => {
                 placeholder="Add a new todo..."
                 value={text}
                 onChangeText={setText}
+                onSubmitEditing={handleAddTodo}
+                blurOnSubmit={false}
             />
             <TouchableOpacity style={styles.button} onPress={handleAddTodo}>
                 <Text style={styles.buttonText}>Add</Text>
