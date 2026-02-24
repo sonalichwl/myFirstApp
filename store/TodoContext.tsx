@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, ReactNode, useContext, useEffect, useReducer } from 'react';
 
 export interface Todo {
   id: string;
@@ -9,18 +10,29 @@ export interface Todo {
 type TodoAction =
   | { type: 'ADD_TODO'; payload: string }
   | { type: 'TOGGLE_TODO'; payload: string }
-  | { type: 'DELETE_TODO'; payload: string };
+  | { type: 'DELETE_TODO'; payload: string }
+  | { type: 'SET_TODOS'; payload: Todo[] };
 
 interface TodoState {
   todos: Todo[];
+  isLoaded: boolean;
 }
 
 const initialState: TodoState = {
   todos: [],
+  isLoaded: false,
 };
+
+const STORAGE_KEY = '@todos_storage';
 
 const todoReducer = (state: TodoState, action: TodoAction): TodoState => {
   switch (action.type) {
+    case 'SET_TODOS':
+      return {
+        ...state,
+        todos: action.payload,
+        isLoaded: true,
+      };
     case 'ADD_TODO':
       return {
         ...state,
@@ -60,6 +72,40 @@ const TodoContext = createContext<TodoContextType | undefined>(undefined);
 export const TodoProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(todoReducer, initialState);
 
+  // Load todos from storage on mount
+  useEffect(() => {
+    const loadTodos = async () => {
+      try {
+        const storedTodos = await AsyncStorage.getItem(STORAGE_KEY);
+        if (storedTodos) {
+          dispatch({ type: 'SET_TODOS', payload: JSON.parse(storedTodos) });
+        } else {
+          dispatch({ type: 'SET_TODOS', payload: [] });
+        }
+      } catch (error) {
+        console.error('Failed to load todos:', error);
+        dispatch({ type: 'SET_TODOS', payload: [] });
+      }
+    };
+
+    loadTodos();
+  }, []);
+
+  // Save todos to storage whenever they change
+  useEffect(() => {
+    const saveTodos = async () => {
+      if (state.isLoaded) {
+        try {
+          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state.todos));
+        } catch (error) {
+          console.error('Failed to save todos:', error);
+        }
+      }
+    };
+
+    saveTodos();
+  }, [state.todos, state.isLoaded]);
+
   return (
     <TodoContext.Provider value={{ state, dispatch }}>
       {children}
@@ -74,3 +120,4 @@ export const useTodoContext = () => {
   }
   return context;
 };
+
