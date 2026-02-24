@@ -76,9 +76,12 @@ export const TodoProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const loadTodos = async () => {
       try {
+        console.log('Attempting to load todos from storage...');
         const storedTodos = await AsyncStorage.getItem(STORAGE_KEY);
+        console.log('Stored todos found:', storedTodos);
         if (storedTodos) {
-          dispatch({ type: 'SET_TODOS', payload: JSON.parse(storedTodos) });
+          const parsed = JSON.parse(storedTodos);
+          dispatch({ type: 'SET_TODOS', payload: parsed });
         } else {
           dispatch({ type: 'SET_TODOS', payload: [] });
         }
@@ -96,7 +99,9 @@ export const TodoProvider = ({ children }: { children: ReactNode }) => {
     const saveTodos = async () => {
       if (state.isLoaded) {
         try {
+          console.log('Saving todos to storage:', state.todos);
           await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state.todos));
+          console.log('Todos saved successfully');
         } catch (error) {
           console.error('Failed to save todos:', error);
         }
